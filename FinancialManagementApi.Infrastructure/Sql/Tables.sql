@@ -1,0 +1,62 @@
+USE FinancialManagementDb
+CREATE TABLE Customers
+(
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Code NVARCHAR(20) NOT NULL UNIQUE,
+    Name NVARCHAR(200) NOT NULL,
+    Email NVARCHAR(200) NULL,
+    Phone NVARCHAR(50) NULL,
+    Address NVARCHAR(500) NULL,
+    IsActive BIT NOT NULL DEFAULT 1,
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+
+CREATE TABLE Products
+(
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Code NVARCHAR(20) NOT NULL UNIQUE,
+    Name NVARCHAR(200) NOT NULL,
+    UnitPrice DECIMAL(18,2) NOT NULL,
+    IsActive BIT NOT NULL DEFAULT 1,
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+
+CREATE TABLE Invoices
+(
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    InvoiceNumber NVARCHAR(50) NOT NULL UNIQUE,
+    CustomerId INT NOT NULL,
+    InvoiceDate DATE NOT NULL,
+    Status INT NOT NULL,
+    TotalAmount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    PaidAmount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    Notes NVARCHAR(500) NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    CONSTRAINT FK_Invoices_Customers FOREIGN KEY (CustomerId) REFERENCES Customers(Id)
+);
+
+CREATE TABLE InvoiceItems
+(
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    InvoiceId INT NOT NULL,
+    ProductId INT NOT NULL,
+    Quantity DECIMAL(18,2) NOT NULL,
+    UnitPrice DECIMAL(18,2) NOT NULL,
+    LineTotal DECIMAL(18,2) NOT NULL,
+    CONSTRAINT FK_InvoiceItems_Invoices FOREIGN KEY (InvoiceId) REFERENCES Invoices(Id),
+    CONSTRAINT FK_InvoiceItems_Products FOREIGN KEY (ProductId) REFERENCES Products(Id)
+);
+
+CREATE TABLE Payments
+(
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    CustomerId INT NOT NULL,
+    InvoiceId INT NOT NULL,
+    PaymentDate DATE NOT NULL,
+    Amount DECIMAL(18,2) NOT NULL,
+    ReferenceNumber NVARCHAR(100) NULL,
+    Notes NVARCHAR(500) NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    CONSTRAINT FK_Payments_Customers FOREIGN KEY (CustomerId) REFERENCES Customers(Id),
+    CONSTRAINT FK_Payments_Invoices FOREIGN KEY (InvoiceId) REFERENCES Invoices(Id)
+);

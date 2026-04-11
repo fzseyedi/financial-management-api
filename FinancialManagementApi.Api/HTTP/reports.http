@@ -1,0 +1,7 @@
+﻿@host = http://localhost:5182
+
+### Get customer balance
+GET {{host}}/api/reports/customer-balance/1
+
+### Get unpaid invoices
+GET {{host}}/api/reports/unpaid-invoices

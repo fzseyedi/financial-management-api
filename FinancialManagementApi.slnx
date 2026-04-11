@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="Readme.md" />
+  </Folder>
+  <Project Path="FinancialManagementApi.Api/FinancialManagementApi.Api.csproj" />
+  <Project Path="FinancialManagementApi.Application/FinancialManagementApi.Application.csproj" />
+  <Project Path="FinancialManagementApi.Domain/FinancialManagementApi.Domain.csproj" />
+  <Project Path="FinancialManagementApi.Infrastructure/FinancialManagementApi.Infrastructure.csproj" />
+  <Project Path="FinancialManagementApi.Tests/FinancialManagementApi.Tests.csproj" />
+</Solution>

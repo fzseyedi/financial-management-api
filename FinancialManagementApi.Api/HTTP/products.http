@@ -1,0 +1,36 @@
+﻿@host = http://localhost:5182
+
+### Create product
+POST {{host}}/api/products
+Content-Type: application/json
+
+{
+  "code": "PRD-005",
+  "name": "Logitech mouse",
+  "unitPrice": 125.00
+}
+
+### Get active products only
+GET {{host}}/api/products
+
+### Get all products including inactive
+GET {{host}}/api/products?includeInactive=true
+
+### Get product by id
+GET {{host}}/api/products/1
+
+### Update product
+PUT {{host}}/api/products/1
+Content-Type: application/json
+
+{
+  "code": "PRD-001",
+  "name": "Office Chair Deluxe",
+  "unitPrice": 175.00
+}
+
+### Deactivate product
+PUT {{host}}/api/products/1/deactivate
+
+### Activate product
+PUT {{host}}/api/products/1/activate

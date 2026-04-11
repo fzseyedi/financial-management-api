@@ -1,0 +1,29 @@
+﻿@host = http://localhost:5182
+
+### Create invoice with items in one transaction
+POST {{host}}/api/invoices
+Content-Type: application/json
+
+{
+  "customerId": 1,
+  "invoiceDate": "2026-04-09T00:00:00",
+  "notes": "Second invoice",
+  "items": [
+    {
+      "productId": 1,
+      "quantity": 2,
+      "unitPrice": 150.00
+    },
+    {
+      "productId": 2,
+      "quantity": 1,
+      "unitPrice": 45.00
+    }
+  ]
+}
+
+### Get invoice by id
+GET {{host}}/api/invoices/8
+
+### Issue invoice
+POST {{host}}/api/invoices/8/issue

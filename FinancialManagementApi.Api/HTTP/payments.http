@@ -1,0 +1,14 @@
+﻿@host = http://localhost:5182
+
+### Record payment
+POST {{host}}/api/payments
+Content-Type: application/json
+
+{
+  "customerId": 1,
+  "invoiceId": 1,
+  "paymentDate": "2026-04-09T00:00:00",
+  "amount": 100.00,
+  "referenceNumber": "PAY-001",
+  "notes": "First payment"
+}

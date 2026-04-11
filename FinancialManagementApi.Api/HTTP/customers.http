@@ -1,0 +1,40 @@
+﻿@host = http://localhost:5182
+
+### Create customer
+POST {{host}}/api/customers
+Content-Type: application/json
+
+{
+  "code": "CUST-200",
+  "name": "Yellow Delta Trading",
+  "email": "info@yellowdelta.com",
+  "phone": "666-2000",
+  "address": "Ankara"
+}
+
+### Get active customers only
+GET {{host}}/api/customers
+
+### Get all customers including inactive
+GET {{host}}/api/customers?includeInactive=true
+
+### Get customer by id
+GET {{host}}/api/customers/1
+
+### Update customer
+PUT {{host}}/api/customers/1
+Content-Type: application/json
+
+{
+  "code": "CUST-001",
+  "name": "Acme Trading Updated",
+  "email": "sales@acme.com",
+  "phone": "111111",
+  "address": "Istanbul, Turkey"
+}
+
+### Deactivate customer
+PUT {{host}}/api/customers/1/deactivate
+
+### Activate customer
+PUT {{host}}/api/customers/1/activate
