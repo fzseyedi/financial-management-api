@@ -1,4 +1,5 @@
-﻿using Dapper;
+﻿using System.Data;
+using Dapper;
 using Dapper.Contrib.Extensions;
 using FinancialManagementApi.Application.Abstractions;
 using FinancialManagementApi.Application.DTOs;
@@ -21,6 +22,15 @@ public sealed class PaymentRepository : IPaymentRepository
         using var connection = _connectionFactory.CreateConnection();
 
         var newId = await connection.InsertAsync(payment);
+        return (int)newId;
+    }
+
+    public async Task<int> CreateAsync(Payment payment, IDbTransaction transaction, CancellationToken cancellationToken)
+    {
+        if (transaction is null)
+            throw new ArgumentNullException(nameof(transaction));
+
+        var newId = await transaction.Connection!.InsertAsync(payment, transaction);
         return (int)newId;
     }
 

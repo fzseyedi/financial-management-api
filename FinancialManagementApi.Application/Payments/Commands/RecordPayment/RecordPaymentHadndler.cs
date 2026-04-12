@@ -9,17 +9,20 @@ public sealed class RecordPaymentHandler
     private readonly IPaymentRepository _paymentRepository;
     private readonly ICustomerRepository _customerRepository;
     private readonly IInvoiceRepository _invoiceRepository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IValidator<RecordPaymentCommand> _validator;
 
     public RecordPaymentHandler(
         IPaymentRepository paymentRepository,
         ICustomerRepository customerRepository,
         IInvoiceRepository invoiceRepository,
+        IUnitOfWork unitOfWork,
         IValidator<RecordPaymentCommand> validator)
     {
         _paymentRepository = paymentRepository;
         _customerRepository = customerRepository;
         _invoiceRepository = invoiceRepository;
+        _unitOfWork = unitOfWork;
         _validator = validator;
     }
 
@@ -34,27 +37,37 @@ public sealed class RecordPaymentHandler
         if (customer is null)
             throw new NotFoundException($"Customer with id {command.CustomerId} was not found.");
 
-        var invoice = await _invoiceRepository.GetByIdAsync(command.InvoiceId, cancellationToken);
-        if (invoice is null)
-            throw new NotFoundException($"Invoice with id {command.InvoiceId} was not found.");
+        // Execute invoice update and payment creation within a single transaction
+        // This ensures atomicity: either both succeed or both fail
+        var paymentId = await _unitOfWork.ExecuteInTransactionAsync(
+            async transaction =>
+            {
+                // Use pessimistic locking to prevent concurrent payment modifications
+                var invoice = await _invoiceRepository.GetByIdWithLockAsync(command.InvoiceId, transaction, cancellationToken);
+                if (invoice is null)
+                    throw new NotFoundException($"Invoice with id {command.InvoiceId} was not found.");
 
-        if (invoice.CustomerId != command.CustomerId)
-            throw new BadRequestException("The specified invoice does not belong to the specified customer.");
+                if (invoice.CustomerId != command.CustomerId)
+                    throw new BadRequestException("The specified invoice does not belong to the specified customer.");
 
-        invoice.RecordPayment(command.Amount);
+                invoice.RecordPayment(command.Amount);
 
-        var updated = await _invoiceRepository.UpdateAsync(invoice, cancellationToken);
-        if (!updated)
-            throw new BadRequestException("Invoice payment update failed.");
+                var updated = await _invoiceRepository.UpdateAsync(invoice, transaction, cancellationToken);
+                if (!updated)
+                    throw new BadRequestException("Invoice payment update failed.");
 
-        var payment = new Domain.Entities.Payment(
-            command.CustomerId,
-            command.InvoiceId,
-            command.PaymentDate,
-            command.Amount,
-            string.IsNullOrWhiteSpace(command.ReferenceNumber) ? null : command.ReferenceNumber.Trim(),
-            string.IsNullOrWhiteSpace(command.Notes) ? null : command.Notes.Trim());
+                var payment = new Domain.Entities.Payment(
+                    command.CustomerId,
+                    command.InvoiceId,
+                    command.PaymentDate,
+                    command.Amount,
+                    string.IsNullOrWhiteSpace(command.ReferenceNumber) ? null : command.ReferenceNumber.Trim(),
+                    string.IsNullOrWhiteSpace(command.Notes) ? null : command.Notes.Trim());
 
-        return await _paymentRepository.CreateAsync(payment, cancellationToken);
+                return await _paymentRepository.CreateAsync(payment, transaction, cancellationToken);
+            },
+            cancellationToken);
+
+        return paymentId;
     }
 }

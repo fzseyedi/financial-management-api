@@ -1,6 +1,7 @@
 ﻿using FinancialManagementApi.Application.Abstractions;
 using FinancialManagementApi.Infrastructure.Persistence;
 using FinancialManagementApi.Infrastructure.Repositories;
+using FinancialManagementApi.Infrastructure.UnitOfWork;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FinancialManagementApi.Infrastructure;
@@ -15,6 +16,7 @@ public static class DependencyInjection
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<IInvoiceRepository, InvoiceRepository>();
         services.AddScoped<IPaymentRepository, PaymentRepository>();
+        services.AddScoped<IUnitOfWork, UnitOfWork.UnitOfWork>();
 
         return services;
     }

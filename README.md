@@ -170,7 +170,6 @@ instead of physical deletion in the main workflow.
     }
   ]
 }
-```
 
 ---
 

@@ -81,6 +81,14 @@ public sealed class InvoiceRepository : IInvoiceRepository
         return await connection.UpdateAsync(invoice);
     }
 
+    public async Task<bool> UpdateAsync(Invoice invoice, IDbTransaction transaction, CancellationToken cancellationToken)
+    {
+        if (transaction is null)
+            throw new ArgumentNullException(nameof(transaction));
+
+        return await transaction.Connection!.UpdateAsync(invoice, transaction);
+    }
+
     public async Task<Invoice?> GetByIdAsync(int id, CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();
@@ -88,6 +96,27 @@ public sealed class InvoiceRepository : IInvoiceRepository
         var command = new CommandDefinition(
             InvoiceSql.GetById,
             new { Id = id },
+            cancellationToken: cancellationToken);
+
+        return await connection.QuerySingleOrDefaultAsync<Invoice>(command);
+    }
+
+    public async Task<Invoice?> GetByIdWithLockAsync(int id, IDbTransaction transaction, CancellationToken cancellationToken)
+    {
+        if (transaction is null)
+            throw new ArgumentNullException(nameof(transaction));
+
+        var connection = transaction.Connection;
+        if (connection is null)
+            throw new InvalidOperationException("Transaction connection is null.");
+
+        // Use WITH (UPDLOCK) for pessimistic locking to prevent concurrent modifications
+        var lockingSql = @"SELECT * FROM Invoices WITH (UPDLOCK) WHERE Id = @Id";
+
+        var command = new CommandDefinition(
+            lockingSql,
+            new { Id = id },
+            transaction: transaction,
             cancellationToken: cancellationToken);
 
         return await connection.QuerySingleOrDefaultAsync<Invoice>(command);
