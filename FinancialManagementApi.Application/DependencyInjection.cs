@@ -1,6 +1,7 @@
 ﻿using FinancialManagementApi.Application.Customers.Commands.ActivateCustomer;
 using FinancialManagementApi.Application.Customers.Commands.CreateCustomer;
 using FinancialManagementApi.Application.Customers.Commands.DeactivateCustomer;
+using FinancialManagementApi.Application.Customers.Commands.DeleteCustomer;
 using FinancialManagementApi.Application.Customers.Commands.UpdateCustomer;
 using FinancialManagementApi.Application.Customers.Queries;
 using FinancialManagementApi.Application.Invoices.Commands;
@@ -28,6 +29,7 @@ public static class DependencyInjection
         services.AddScoped<UpdateCustomerHandler>();
         services.AddScoped<DeactivateCustomerHandler>();
         services.AddScoped<ActivateCustomerHandler>();
+        services.AddScoped<DeleteCustomerHandler>();
         services.AddScoped<GetCustomerByIdHandler>();
         services.AddScoped<GetAllCustomersHandler>();
 

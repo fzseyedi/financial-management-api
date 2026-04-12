@@ -180,6 +180,18 @@ public sealed class InvoiceRepository : IInvoiceRepository
         return await connection.ExecuteScalarAsync<decimal>(command);
     }
 
+    public async Task<bool> HasCustomerInvoicesAsync(int customerId, CancellationToken cancellationToken)
+    {
+        using var connection = _connectionFactory.CreateConnection();
+
+        var command = new CommandDefinition(
+            InvoiceSql.HasCustomerInvoices,
+            new { CustomerId = customerId },
+            cancellationToken: cancellationToken);
+
+        return await connection.ExecuteScalarAsync<bool>(command);
+    }
+
     private sealed class InvoiceHeaderRow
     {
         public int Id { get; init; }

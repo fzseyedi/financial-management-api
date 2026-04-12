@@ -81,4 +81,14 @@ public static class InvoiceSql
         WHERE ii.InvoiceId = @InvoiceId
         ORDER BY ii.Id;
         """;
+
+    public const string HasCustomerInvoices = """
+        SELECT CAST(CASE WHEN EXISTS
+        (
+            SELECT 1
+            FROM Invoices
+            WHERE CustomerId = @CustomerId
+        )
+        THEN 1 ELSE 0 END AS BIT);
+        """;
 }

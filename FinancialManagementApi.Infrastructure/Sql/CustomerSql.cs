@@ -65,4 +65,9 @@ public static class CustomerSql
         FROM Customers
         ORDER BY Name;
         """;
+
+    public const string Delete = """
+        DELETE FROM Customers
+        WHERE Id = @Id;
+        """;
 }

@@ -30,6 +30,19 @@ public sealed class CustomerRepository : ICustomerRepository
         return await connection.UpdateAsync(customer);
     }
 
+    public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken)
+    {
+        using var connection = _connectionFactory.CreateConnection();
+
+        var command = new CommandDefinition(
+            CustomerSql.Delete,
+            new { Id = id },
+            cancellationToken: cancellationToken);
+
+        var result = await connection.ExecuteAsync(command);
+        return result > 0;
+    }
+
     public async Task<Customer?> GetByIdAsync(int id, CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();

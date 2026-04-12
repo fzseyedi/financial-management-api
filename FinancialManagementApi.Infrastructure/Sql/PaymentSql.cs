@@ -31,4 +31,15 @@ public static class PaymentSql
         WHERE i.TotalAmount > i.PaidAmount
         ORDER BY i.InvoiceDate, i.Id;
         """;
+
+    public const string HasCustomerPayments = """
+        SELECT CAST(CASE WHEN EXISTS
+        (
+            SELECT 1
+            FROM Payments p
+            INNER JOIN Invoices i ON i.Id = p.InvoiceId
+            WHERE i.CustomerId = @CustomerId
+        )
+        THEN 1 ELSE 0 END AS BIT);
+        """;
 }

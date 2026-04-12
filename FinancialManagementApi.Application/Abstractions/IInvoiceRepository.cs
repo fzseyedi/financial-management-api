@@ -34,4 +34,9 @@ public interface IInvoiceRepository
 
     Task<bool> HasItemsAsync(int invoiceId, CancellationToken cancellationToken);
     Task<decimal> GetInvoiceTotalAsync(int invoiceId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Checks if a customer has any invoices.
+    /// </summary>
+    Task<bool> HasCustomerInvoicesAsync(int customerId, CancellationToken cancellationToken);
 }

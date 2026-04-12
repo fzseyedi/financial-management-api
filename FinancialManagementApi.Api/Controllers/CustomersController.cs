@@ -2,6 +2,7 @@
 using FinancialManagementApi.Application.Customers.Commands.ActivateCustomer;
 using FinancialManagementApi.Application.Customers.Commands.CreateCustomer;
 using FinancialManagementApi.Application.Customers.Commands.DeactivateCustomer;
+using FinancialManagementApi.Application.Customers.Commands.DeleteCustomer;
 using FinancialManagementApi.Application.Customers.Commands.UpdateCustomer;
 using FinancialManagementApi.Application.Customers.Queries;
 using Microsoft.AspNetCore.Mvc;
@@ -70,6 +71,16 @@ public sealed class CustomersController : ControllerBase
         CancellationToken cancellationToken)
     {
         await handler.HandleAsync(new ActivateCustomerCommand(id), cancellationToken);
+        return NoContent();
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(
+        int id,
+        [FromServices] DeleteCustomerHandler handler,
+        CancellationToken cancellationToken)
+    {
+        await handler.HandleAsync(new DeleteCustomerCommand(id), cancellationToken);
         return NoContent();
     }
 

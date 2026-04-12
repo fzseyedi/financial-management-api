@@ -56,4 +56,16 @@ public sealed class PaymentRepository : IPaymentRepository
 
         return await connection.QueryAsync<UnpaidInvoiceDto>(command);
     }
+
+    public async Task<bool> HasCustomerPaymentsAsync(int customerId, CancellationToken cancellationToken)
+    {
+        using var connection = _connectionFactory.CreateConnection();
+
+        var command = new CommandDefinition(
+            PaymentSql.HasCustomerPayments,
+            new { CustomerId = customerId },
+            cancellationToken: cancellationToken);
+
+        return await connection.ExecuteScalarAsync<bool>(command);
+    }
 }

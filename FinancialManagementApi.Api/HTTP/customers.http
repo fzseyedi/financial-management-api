@@ -38,3 +38,6 @@ PUT {{host}}/api/customers/1/deactivate
 
 ### Activate customer
 PUT {{host}}/api/customers/1/activate
+
+### Delete customer
+DELETE {{host}}/api/customers/1004

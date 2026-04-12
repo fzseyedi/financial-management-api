@@ -16,4 +16,9 @@ public interface IPaymentRepository
 
     Task<CustomerBalanceDto?> GetCustomerBalanceAsync(int customerId, CancellationToken cancellationToken);
     Task<IEnumerable<UnpaidInvoiceDto>> GetUnpaidInvoicesAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Checks if a customer has any payments.
+    /// </summary>
+    Task<bool> HasCustomerPaymentsAsync(int customerId, CancellationToken cancellationToken);
 }

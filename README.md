@@ -12,6 +12,7 @@ This project is designed as a portfolio project for a senior .NET developer prof
 - Create customer
 - Update customer
 - Activate / deactivate customer
+- **Delete customer** (requires no associated invoices or payments)
 - Get customer by id
 - Get active customers
 - Optionally include inactive customers
@@ -127,6 +128,13 @@ Customers and products support:
 
 instead of physical deletion in the main workflow.
 
+### Hard delete strategy
+While the main lifecycle uses soft delete (activation/deactivation), customers can be **permanently deleted** via `DELETE /api/customers/{id}` with the following constraints:
+- Customer must have **no associated invoices**
+- Customer must have **no associated payments**
+
+This ensures **data integrity** by preventing orphaned financial records and maintaining audit trail consistency.
+
 ---
 
 ## API Overview
@@ -136,6 +144,7 @@ instead of physical deletion in the main workflow.
 - `PUT /api/customers/{id}`
 - `PUT /api/customers/{id}/deactivate`
 - `PUT /api/customers/{id}/activate`
+- `DELETE /api/customers/{id}`
 - `GET /api/customers/{id}`
 - `GET /api/customers`
 - `GET /api/customers?includeInactive=true`
@@ -195,7 +204,7 @@ instead of physical deletion in the main workflow.
     }
   ]
 }
-
+```
 ---
 
 ## Author
