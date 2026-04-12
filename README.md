@@ -51,8 +51,8 @@ The solution follows a **Clean Architecture** structure with clear separation of
 
 ### Layer responsibilities
 - **Domain**: entities, enums, domain exceptions, business rules
-- **Application**: commands, queries, handlers, validators, DTOs, repository abstractions
-- **Infrastructure**: SQL Server persistence, Dapper repositories, Dapper.Contrib usage, SQL queries
+- **Application**: commands, queries, handlers, validators, DTOs, repository abstractions, Unit of Work pattern
+- **Infrastructure**: SQL Server persistence, Dapper repositories, Dapper.Contrib usage, SQL queries, UnitOfWork implementation
 - **Api**: controllers, middleware, request contracts, OpenAPI setup, `.http` files
 - **Tests**: validator tests, domain tests, handler tests
 
@@ -75,6 +75,14 @@ The solution follows a **Clean Architecture** structure with clear separation of
 
 ## Design Notes
 
+### Design Patterns
+
+**Unit of Work Pattern**: Implemented via `IUnitOfWork` to manage atomic transactions across multiple repositories. Used for complex operations requiring ACID guarantees (e.g., payment recording).
+
+**Repository Pattern**: Abstractions separate data access logic from business logic. Custom SQL queries and Dapper.Contrib are used strategically.
+
+**Command/Query Handler Pattern**: Business logic is organized into handler classes following CQRS principles for clarity and testability.
+
 ### Dapper strategy
 This solution uses:
 - **Dapper.Contrib** for simple `Insert` / `Update`
@@ -87,6 +95,23 @@ This avoids:
 - orphan invoice headers
 - partial document persistence
 - inconsistency between invoice totals and rows
+
+### ACID-compliant payment recording
+Payment recording against invoices uses the **Unit of Work pattern** to ensure ACID compliance:
+
+**Atomicity**: Invoice state update and payment creation happen within a single database transaction. Both succeed or both fail.
+
+**Consistency**: Invoice status and paid amount remain consistent with payment records. Domain validation prevents overpayments.
+
+**Isolation**: Pessimistic locking (`WITH UPDLOCK`) prevents concurrent modifications during payment recording, avoiding race conditions.
+
+**Durability**: SQL Server transaction commits guarantee persistence.
+
+This design ensures:
+- No partial payment states
+- No duplicate payments
+- No inconsistent invoice/payment data
+- Safe concurrent payment handling
 
 ### Error handling
 The API uses:
