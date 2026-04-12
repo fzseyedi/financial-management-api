@@ -6,4 +6,5 @@ public sealed record CustomerDto(
     string Name,
     string? Email,
     string? Phone,
+    string? Address,
     bool IsActive);

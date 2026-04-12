@@ -13,6 +13,7 @@ public static class CustomerMappings
             customer.Name,
             customer.Email,
             customer.Phone,
+            customer.Address,
             customer.IsActive);
     }
 }
