@@ -16,6 +16,7 @@ This project is designed as a portfolio project for a senior .NET developer prof
 - Get customer by id
 - Get active customers
 - Optionally include inactive customers
+- **Get customers with pagination support**
 
 ### Products
 - Create product
@@ -24,6 +25,7 @@ This project is designed as a portfolio project for a senior .NET developer prof
 - Get product by id
 - Get active products
 - Optionally include inactive products
+- **Get products with pagination support**
 
 ### Invoices
 - Create invoice with header and items in a single request
@@ -128,6 +130,20 @@ Customers and products support:
 
 instead of physical deletion in the main workflow.
 
+### Pagination strategy
+The `GET /api/customers` endpoint supports **server-side pagination** using:
+- **OFFSET/FETCH** SQL syntax for efficient database queries
+- **Metadata response** containing `totalCount`, `pageNumber`, `pageSize`, and `totalPages`
+- **Configurable page size** with sensible defaults (page size: 10)
+
+Pagination uses `GetAllCustomersPagedQuery` query object and `PaginatedResponse<T>` generic DTO for consistency across paginated endpoints.
+
+Benefits:
+- Reduced memory footprint for large datasets
+- Better performance with database-level pagination
+- Client can calculate total pages for UI rendering
+- Enables consistent API design for future paginated endpoints
+
 ### Hard delete strategy
 While the main lifecycle uses soft delete (activation/deactivation), customers can be **permanently deleted** via `DELETE /api/customers/{id}` with the following constraints:
 - Customer must have **no associated invoices**
@@ -146,8 +162,30 @@ This ensures **data integrity** by preventing orphaned financial records and mai
 - `PUT /api/customers/{id}/activate`
 - `DELETE /api/customers/{id}`
 - `GET /api/customers/{id}`
-- `GET /api/customers`
-- `GET /api/customers?includeInactive=true`
+- `GET /api/customers` - Get active customers (with pagination)
+- `GET /api/customers?includeInactive=true` - Get all customers including inactive (with pagination)
+
+#### Pagination Parameters
+The `GET /api/customers` endpoint supports the following query parameters:
+- `pageNumber` (default: `1`) - The page number to retrieve
+- `pageSize` (default: `10`) - Number of items per page
+- `includeInactive` (default: `false`) - Include inactive customers in results
+
+**Response format** includes pagination metadata:
+```json
+{
+  "items": [...],
+  "totalCount": 50,
+  "pageNumber": 1,
+  "pageSize": 10,
+  "totalPages": 5
+}
+```
+
+**Example requests:**
+- `GET /api/customers?pageNumber=1&pageSize=10` - First page with 10 items
+- `GET /api/customers?pageNumber=2&pageSize=20` - Second page with 20 items
+- `GET /api/customers?includeInactive=true&pageNumber=1&pageSize=15` - All customers (including inactive), page 1, 15 items per page
 
 ### Products
 - `POST /api/products`
@@ -155,8 +193,30 @@ This ensures **data integrity** by preventing orphaned financial records and mai
 - `PUT /api/products/{id}/deactivate`
 - `PUT /api/products/{id}/activate`
 - `GET /api/products/{id}`
-- `GET /api/products`
-- `GET /api/products?includeInactive=true`
+- `GET /api/products` - Get active products (with pagination)
+- `GET /api/products?includeInactive=true` - Get all products including inactive (with pagination)
+
+#### Pagination Parameters
+The `GET /api/products` endpoint supports the following query parameters:
+- `pageNumber` (default: `1`) - The page number to retrieve
+- `pageSize` (default: `10`) - Number of items per page
+- `includeInactive` (default: `false`) - Include inactive products in results
+
+**Response format** includes pagination metadata:
+```json
+{
+  "items": [...],
+  "totalCount": 50,
+  "pageNumber": 1,
+  "pageSize": 10,
+  "totalPages": 5
+}
+```
+
+**Example requests:**
+- `GET /api/products?pageNumber=1&pageSize=10` - First page with 10 items
+- `GET /api/products?pageNumber=2&pageSize=20` - Second page with 20 items
+- `GET /api/products?includeInactive=true&pageNumber=1&pageSize=15` - All products (including inactive), page 1, 15 items per page
 
 ### Invoices
 - `POST /api/invoices`

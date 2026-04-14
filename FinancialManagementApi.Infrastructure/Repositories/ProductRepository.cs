@@ -80,4 +80,37 @@ public sealed class ProductRepository : IProductRepository
 
         return await connection.QueryAsync<Product>(command);
     }
+
+    public async Task<(IEnumerable<Product> Products, int TotalCount)> GetAllPagedAsync(
+        bool includeInactive,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken)
+    {
+        using var connection = _connectionFactory.CreateConnection();
+
+        var sql = includeInactive
+            ? ProductSql.GetAllIncludingInactivePaged
+            : ProductSql.GetAllActivePaged;
+
+        var countSql = includeInactive
+            ? ProductSql.GetTotalCountIncludingInactive
+            : ProductSql.GetTotalCountActive;
+
+        var parameters = new { PageNumber = pageNumber, PageSize = pageSize };
+
+        var command = new CommandDefinition(
+            sql,
+            parameters,
+            cancellationToken: cancellationToken);
+
+        var countCommand = new CommandDefinition(
+            countSql,
+            cancellationToken: cancellationToken);
+
+        var products = await connection.QueryAsync<Product>(command);
+        var totalCount = await connection.ExecuteScalarAsync<int>(countCommand);
+
+        return (products, totalCount);
+    }
 }

@@ -11,4 +11,9 @@ public interface ICustomerRepository
     Task<bool> ExistsByCodeAsync(string code, CancellationToken cancellationToken);
     Task<bool> ExistsByCodeAsync(string code, int excludeId, CancellationToken cancellationToken);
     Task<IEnumerable<Customer>> GetAllAsync(bool includeInactive, CancellationToken cancellationToken);
+    Task<(IEnumerable<Customer> Customers, int TotalCount)> GetAllPagedAsync(
+        bool includeInactive,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken);
 }

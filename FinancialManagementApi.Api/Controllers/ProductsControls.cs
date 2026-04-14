@@ -87,10 +87,12 @@ public sealed class ProductsController : ControllerBase
     public async Task<IActionResult> GetAll(
         [FromServices] GetAllProductsHandler handler,
         CancellationToken cancellationToken,
-        [FromQuery] bool includeInactive = false)
+        [FromQuery] bool includeInactive = false,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10)
     {
-        var result = await handler.HandleAsync(
-            new GetAllProductsQuery(includeInactive),
+        var result = await handler.HandlePagedAsync(
+            new GetAllProductsPagedQuery(includeInactive, pageNumber, pageSize),
             cancellationToken);
 
         return Ok(result);

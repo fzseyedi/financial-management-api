@@ -17,4 +17,22 @@ public sealed class GetAllCustomersHandler
         var customers = await _customerRepository.GetAllAsync(query.IncludeInactive, cancellationToken);
         return customers.Select(x => x.ToDto());
     }
+
+    public async Task<PaginatedResponse<CustomerDto>> HandlePagedAsync(GetAllCustomersPagedQuery query, CancellationToken cancellationToken)
+    {
+        var (customers, totalCount) = await _customerRepository.GetAllPagedAsync(
+            query.IncludeInactive,
+            query.PageNumber,
+            query.PageSize,
+            cancellationToken);
+
+        var totalPages = (totalCount + query.PageSize - 1) / query.PageSize;
+
+        return new PaginatedResponse<CustomerDto>(
+            customers.Select(x => x.ToDto()),
+            totalCount,
+            query.PageNumber,
+            query.PageSize,
+            totalPages);
+    }
 }

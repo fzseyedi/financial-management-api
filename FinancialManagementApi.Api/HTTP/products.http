@@ -10,11 +10,23 @@ Content-Type: application/json
   "unitPrice": 125.00
 }
 
-### Get active products only
+### Get active products only (page 1, 10 items per page)
 GET {{host}}/api/products
 
-### Get all products including inactive
+### Get active products - first page (explicit pagination)
+GET {{host}}/api/products?pageNumber=1&pageSize=10
+
+### Get active products - second page
+GET {{host}}/api/products?pageNumber=2&pageSize=10
+
+### Get active products - with custom page size
+GET {{host}}/api/products?pageNumber=1&pageSize=20
+
+### Get all products including inactive (page 1)
 GET {{host}}/api/products?includeInactive=true
+
+### Get all products including inactive - page 2 with custom size
+GET {{host}}/api/products?includeInactive=true&pageNumber=2&pageSize=15
 
 ### Get product by id
 GET {{host}}/api/products/1

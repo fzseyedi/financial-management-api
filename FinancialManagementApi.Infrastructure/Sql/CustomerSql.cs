@@ -66,6 +66,50 @@ public static class CustomerSql
         ORDER BY Name;
         """;
 
+    public const string GetAllActivePaged = """
+        SELECT
+            Id,
+            Code,
+            Name,
+            Email,
+            Phone,
+            Address,
+            IsActive,
+            CreatedAt
+        FROM Customers
+        WHERE IsActive = 1
+        ORDER BY Name
+        OFFSET (@PageNumber - 1) * @PageSize ROWS
+        FETCH NEXT @PageSize ROWS ONLY;
+        """;
+
+    public const string GetAllIncludingInactivePaged = """
+        SELECT
+            Id,
+            Code,
+            Name,
+            Email,
+            Phone,
+            Address,
+            IsActive,
+            CreatedAt
+        FROM Customers
+        ORDER BY Name
+        OFFSET (@PageNumber - 1) * @PageSize ROWS
+        FETCH NEXT @PageSize ROWS ONLY;
+        """;
+
+    public const string GetTotalCountActive = """
+        SELECT COUNT(*)
+        FROM Customers
+        WHERE IsActive = 1;
+        """;
+
+    public const string GetTotalCountIncludingInactive = """
+        SELECT COUNT(*)
+        FROM Customers;
+        """;
+
     public const string Delete = """
         DELETE FROM Customers
         WHERE Id = @Id;

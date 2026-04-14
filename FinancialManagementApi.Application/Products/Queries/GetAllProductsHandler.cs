@@ -17,4 +17,22 @@ public sealed class GetAllProductsHandler
         var products = await _productRepository.GetAllAsync(query.IncludeInactive, cancellationToken);
         return products.Select(x => x.ToDto());
     }
+
+    public async Task<PaginatedResponse<ProductDto>> HandlePagedAsync(GetAllProductsPagedQuery query, CancellationToken cancellationToken)
+    {
+        var (products, totalCount) = await _productRepository.GetAllPagedAsync(
+            query.IncludeInactive,
+            query.PageNumber,
+            query.PageSize,
+            cancellationToken);
+
+        var totalPages = (totalCount + query.PageSize - 1) / query.PageSize;
+
+        return new PaginatedResponse<ProductDto>(
+            products.Select(x => x.ToDto()),
+            totalCount,
+            query.PageNumber,
+            query.PageSize,
+            totalPages);
+    }
 }

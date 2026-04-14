@@ -10,4 +10,9 @@ public interface IProductRepository
     Task<bool> ExistsByCodeAsync(string code, CancellationToken cancellationToken);
     Task<bool> ExistsByCodeAsync(string code, int excludeId, CancellationToken cancellationToken);
     Task<IEnumerable<Product>> GetAllAsync(bool includeInactive, CancellationToken cancellationToken);
+    Task<(IEnumerable<Product> Products, int TotalCount)> GetAllPagedAsync(
+        bool includeInactive,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken);
 }

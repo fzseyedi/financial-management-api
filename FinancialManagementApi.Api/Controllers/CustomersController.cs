@@ -102,10 +102,12 @@ public sealed class CustomersController : ControllerBase
     public async Task<IActionResult> GetAll(
         [FromServices] GetAllCustomersHandler handler,
         CancellationToken cancellationToken,
-        [FromQuery] bool includeInactive = false)
+        [FromQuery] bool includeInactive = false,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10)
     {
-        var result = await handler.HandleAsync(
-            new GetAllCustomersQuery(includeInactive),
+        var result = await handler.HandlePagedAsync(
+            new GetAllCustomersPagedQuery(includeInactive, pageNumber, pageSize),
             cancellationToken);
 
         return Ok(result);

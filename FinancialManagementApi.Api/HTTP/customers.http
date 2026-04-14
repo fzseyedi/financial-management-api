@@ -12,11 +12,23 @@ Content-Type: application/json
   "address": "Ankara"
 }
 
-### Get active customers only
+### Get active customers only (page 1, 10 items per page)
 GET {{host}}/api/customers
 
-### Get all customers including inactive
+### Get active customers - first page (explicit pagination)
+GET {{host}}/api/customers?pageNumber=1&pageSize=10
+
+### Get active customers - second page
+GET {{host}}/api/customers?pageNumber=2&pageSize=10
+
+### Get active customers - with custom page size
+GET {{host}}/api/customers?pageNumber=1&pageSize=20
+
+### Get all customers including inactive (page 1)
 GET {{host}}/api/customers?includeInactive=true
+
+### Get all customers including inactive - page 2 with custom size
+GET {{host}}/api/customers?includeInactive=true&pageNumber=2&pageSize=15
 
 ### Get customer by id
 GET {{host}}/api/customers/1

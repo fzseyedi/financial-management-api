@@ -59,4 +59,44 @@ public static class ProductSql
         FROM Products
         ORDER BY Name;
         """;
+
+    public const string GetAllActivePaged = """
+        SELECT
+            Id,
+            Code,
+            Name,
+            UnitPrice,
+            IsActive,
+            CreatedAt
+        FROM Products
+        WHERE IsActive = 1
+        ORDER BY Name
+        OFFSET (@PageNumber - 1) * @PageSize ROWS
+        FETCH NEXT @PageSize ROWS ONLY;
+        """;
+
+    public const string GetAllIncludingInactivePaged = """
+        SELECT
+            Id,
+            Code,
+            Name,
+            UnitPrice,
+            IsActive,
+            CreatedAt
+        FROM Products
+        ORDER BY Name
+        OFFSET (@PageNumber - 1) * @PageSize ROWS
+        FETCH NEXT @PageSize ROWS ONLY;
+        """;
+
+    public const string GetTotalCountActive = """
+        SELECT COUNT(*)
+        FROM Products
+        WHERE IsActive = 1;
+        """;
+
+    public const string GetTotalCountIncludingInactive = """
+        SELECT COUNT(*)
+        FROM Products;
+        """;
 }

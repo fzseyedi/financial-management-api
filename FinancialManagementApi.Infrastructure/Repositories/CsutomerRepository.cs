@@ -93,4 +93,37 @@ public sealed class CustomerRepository : ICustomerRepository
 
         return await connection.QueryAsync<Customer>(command);
     }
+
+    public async Task<(IEnumerable<Customer> Customers, int TotalCount)> GetAllPagedAsync(
+        bool includeInactive,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken)
+    {
+        using var connection = _connectionFactory.CreateConnection();
+
+        var sql = includeInactive
+            ? CustomerSql.GetAllIncludingInactivePaged
+            : CustomerSql.GetAllActivePaged;
+
+        var countSql = includeInactive
+            ? CustomerSql.GetTotalCountIncludingInactive
+            : CustomerSql.GetTotalCountActive;
+
+        var parameters = new { PageNumber = pageNumber, PageSize = pageSize };
+
+        var command = new CommandDefinition(
+            sql,
+            parameters,
+            cancellationToken: cancellationToken);
+
+        var countCommand = new CommandDefinition(
+            countSql,
+            cancellationToken: cancellationToken);
+
+        var customers = await connection.QueryAsync<Customer>(command);
+        var totalCount = await connection.ExecuteScalarAsync<int>(countCommand);
+
+        return (customers, totalCount);
+    }
 }
