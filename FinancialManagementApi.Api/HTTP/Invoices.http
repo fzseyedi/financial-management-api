@@ -1,5 +1,26 @@
 ﻿@host = http://localhost:5182
 
+### Get all invoices with default pagination
+GET {{host}}/api/invoices
+
+### Get all invoices with custom page size
+GET {{host}}/api/invoices?pageNumber=1&pageSize=5
+
+### Get all invoices for specific customer
+GET {{host}}/api/invoices?customerId=1&pageNumber=1&pageSize=10
+
+### Get all invoices including draft invoices
+GET {{host}}/api/invoices?includeIssued=true&pageNumber=1&pageSize=10
+
+### Get all invoices within date range
+GET {{host}}/api/invoices?dateFrom=2024-01-01&dateTo=2024-12-31&pageNumber=1&pageSize=10
+
+### Get invoices for customer 1 with date range and include draft invoices
+GET {{host}}/api/invoices?customerId=1&includeIssued=true&dateFrom=2024-01-01&dateTo=2024-12-31&pageNumber=1&pageSize=10
+
+### Get second page of invoices
+GET {{host}}/api/invoices?pageNumber=2&pageSize=10
+
 ### Create invoice with items in one transaction
 POST {{host}}/api/invoices
 Content-Type: application/json

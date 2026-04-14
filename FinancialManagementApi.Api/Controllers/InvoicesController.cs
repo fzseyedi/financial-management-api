@@ -10,6 +10,22 @@ namespace FinancialManagementApi.Api.Controllers;
 [Route("api/[controller]")]
 public sealed class InvoicesController : ControllerBase
 {
+    [HttpGet]
+    public async Task<IActionResult> GetAll(
+        [FromServices] GetAllInvoicesHandler handler,
+        CancellationToken cancellationToken,
+        [FromQuery] int? customerId = null,
+        [FromQuery] bool includeIssued = false,
+        [FromQuery] DateTime? dateFrom = null,
+        [FromQuery] DateTime? dateTo = null,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10)
+    {
+        var query = new GetAllInvoicesPagedQuery(customerId, includeIssued, dateFrom, dateTo, pageNumber, pageSize);
+        var result = await handler.HandlePagedAsync(query, cancellationToken);
+        return Ok(result);
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create(
         [FromBody] CreateInvoiceRequest request,

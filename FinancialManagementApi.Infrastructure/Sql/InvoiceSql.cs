@@ -91,4 +91,39 @@ public static class InvoiceSql
         )
         THEN 1 ELSE 0 END AS BIT);
         """;
+
+    public const string GetAllPaged = """
+        SELECT
+            i.Id,
+            i.InvoiceNumber,
+            i.CustomerId,
+            c.Name AS CustomerName,
+            i.InvoiceDate,
+            i.Status,
+            i.TotalAmount,
+            i.PaidAmount,
+            (i.TotalAmount - i.PaidAmount) AS RemainingAmount,
+            i.Notes,
+            i.CreatedAt
+        FROM Invoices i
+        INNER JOIN Customers c ON c.Id = i.CustomerId
+        WHERE 1 = 1
+            AND (@CustomerId IS NULL OR i.CustomerId = @CustomerId)
+            AND (@IncludeIssued = 1 OR i.Status != 0)
+            AND (@DateFrom IS NULL OR i.InvoiceDate >= @DateFrom)
+            AND (@DateTo IS NULL OR i.InvoiceDate <= @DateTo)
+        ORDER BY i.InvoiceDate DESC, i.Id DESC
+        OFFSET (@PageNumber - 1) * @PageSize ROWS
+        FETCH NEXT @PageSize ROWS ONLY;
+        """;
+
+    public const string GetTotalCount = """
+        SELECT COUNT(*)
+        FROM Invoices i
+        WHERE 1 = 1
+            AND (@CustomerId IS NULL OR i.CustomerId = @CustomerId)
+            AND (@IncludeIssued = 1 OR i.Status != 0)
+            AND (@DateFrom IS NULL OR i.InvoiceDate >= @DateFrom)
+            AND (@DateTo IS NULL OR i.InvoiceDate <= @DateTo);
+        """;
 }

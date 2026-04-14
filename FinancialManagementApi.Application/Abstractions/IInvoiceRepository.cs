@@ -39,4 +39,16 @@ public interface IInvoiceRepository
     /// Checks if a customer has any invoices.
     /// </summary>
     Task<bool> HasCustomerInvoicesAsync(int customerId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Retrieves a paginated list of invoices with optional filtering by customer, issued status, and date range.
+    /// </summary>
+    Task<(IEnumerable<InvoiceSummaryDto> Invoices, int TotalCount)> GetAllPagedAsync(
+        int? customerId,
+        bool includeIssued,
+        DateTime? dateFrom,
+        DateTime? dateTo,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken);
 }

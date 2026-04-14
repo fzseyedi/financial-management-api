@@ -222,6 +222,34 @@ The `GET /api/products` endpoint supports the following query parameters:
 - `POST /api/invoices`
 - `POST /api/invoices/{invoiceId}/issue`
 - `GET /api/invoices/{id}`
+- `GET /api/invoices` - Get all invoices (with pagination and optional filtering)
+
+#### Pagination and Filtering Parameters
+The `GET /api/invoices` endpoint supports the following query parameters:
+- `pageNumber` (default: `1`) - The page number to retrieve
+- `pageSize` (default: `10`) - Number of items per page
+- `customerId` (optional) - Filter invoices by customer ID
+- `includeIssued` (default: `false`) - If `true`, includes draft invoices; if `false`, shows only issued and later statuses
+- `dateFrom` (optional) - Filter invoices from this date (inclusive)
+- `dateTo` (optional) - Filter invoices up to this date (inclusive)
+
+**Response format** includes pagination metadata:
+```json
+{
+  "items": [...],
+  "totalCount": 50,
+  "pageNumber": 1,
+  "pageSize": 10,
+  "totalPages": 5
+}
+```
+
+**Example requests:**
+- `GET /api/invoices?pageNumber=1&pageSize=10` - First page with 10 items
+- `GET /api/invoices?customerId=1&pageNumber=1&pageSize=10` - Invoices for customer 1
+- `GET /api/invoices?includeIssued=true&pageNumber=1&pageSize=10` - All invoices including drafts
+- `GET /api/invoices?dateFrom=2024-01-01&dateTo=2024-12-31&pageNumber=1&pageSize=10` - Invoices within date range
+- `GET /api/invoices?customerId=1&includeIssued=true&dateFrom=2024-01-01&dateTo=2024-12-31&pageNumber=1&pageSize=10` - Combined filters
 
 ### Payments
 - `POST /api/payments`

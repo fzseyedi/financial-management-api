@@ -192,6 +192,48 @@ public sealed class InvoiceRepository : IInvoiceRepository
         return await connection.ExecuteScalarAsync<bool>(command);
     }
 
+    public async Task<(IEnumerable<InvoiceSummaryDto> Invoices, int TotalCount)> GetAllPagedAsync(
+        int? customerId,
+        bool includeIssued,
+        DateTime? dateFrom,
+        DateTime? dateTo,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken)
+    {
+        using var connection = _connectionFactory.CreateConnection();
+
+        var invoicesCommand = new CommandDefinition(
+            InvoiceSql.GetAllPaged,
+            new
+            {
+                CustomerId = customerId,
+                IncludeIssued = includeIssued,
+                DateFrom = dateFrom,
+                DateTo = dateTo,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            },
+            cancellationToken: cancellationToken);
+
+        var invoices = (await connection.QueryAsync<InvoiceSummaryDto>(invoicesCommand)).ToList();
+
+        var countCommand = new CommandDefinition(
+            InvoiceSql.GetTotalCount,
+            new
+            {
+                CustomerId = customerId,
+                IncludeIssued = includeIssued,
+                DateFrom = dateFrom,
+                DateTo = dateTo
+            },
+            cancellationToken: cancellationToken);
+
+        var totalCount = await connection.ExecuteScalarAsync<int>(countCommand);
+
+        return (invoices, totalCount);
+    }
+
     private sealed class InvoiceHeaderRow
     {
         public int Id { get; init; }
