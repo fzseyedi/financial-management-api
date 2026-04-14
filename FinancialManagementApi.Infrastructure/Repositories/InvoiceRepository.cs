@@ -5,16 +5,19 @@ using FinancialManagementApi.Application.Abstractions;
 using FinancialManagementApi.Application.DTOs;
 using FinancialManagementApi.Domain.Entities;
 using FinancialManagementApi.Infrastructure.Sql;
+using Microsoft.Extensions.Logging;
 
 namespace FinancialManagementApi.Infrastructure.Repositories;
 
 public sealed class InvoiceRepository : IInvoiceRepository
 {
     private readonly ISqlConnectionFactory _connectionFactory;
+    private readonly ILogger<InvoiceRepository> _logger;
 
-    public InvoiceRepository(ISqlConnectionFactory connectionFactory)
+    public InvoiceRepository(ISqlConnectionFactory connectionFactory, ILogger<InvoiceRepository> logger)
     {
         _connectionFactory = connectionFactory;
+        _logger = logger;
     }
 
     public async Task<int> CreateWithItemsAsync(
@@ -66,27 +69,59 @@ public sealed class InvoiceRepository : IInvoiceRepository
             await dbConnection.UpdateAsync(invoice, transaction);
 
             transaction.Commit();
+            _logger.LogInformation("Invoice created successfully with {ItemCount} items. InvoiceId: {InvoiceId}, CustomerId: {CustomerId}, Total: {TotalAmount}", items.Count, invoiceId, invoice.CustomerId, totalAmount);
             return invoiceId;
         }
-        catch
+        catch (Exception ex)
         {
             transaction.Rollback();
+            _logger.LogError(ex, "Error creating invoice with items for CustomerId: {CustomerId}, ItemCount: {ItemCount}", invoice.CustomerId, items.Count);
             throw;
         }
     }
 
     public async Task<bool> UpdateAsync(Invoice invoice, CancellationToken cancellationToken)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.UpdateAsync(invoice);
+        try
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            var result = await connection.UpdateAsync(invoice);
+            if (result)
+            {
+                _logger.LogInformation("Invoice updated successfully. InvoiceId: {InvoiceId}, CustomerId: {CustomerId}", invoice.Id, invoice.CustomerId);
+            }
+            else
+            {
+                _logger.LogWarning("No invoice found to update. InvoiceId: {InvoiceId}", invoice.Id);
+            }
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating invoice. InvoiceId: {InvoiceId}", invoice.Id);
+            throw;
+        }
     }
 
     public async Task<bool> UpdateAsync(Invoice invoice, IDbTransaction transaction, CancellationToken cancellationToken)
     {
-        if (transaction is null)
-            throw new ArgumentNullException(nameof(transaction));
+        try
+        {
+            if (transaction is null)
+                throw new ArgumentNullException(nameof(transaction));
 
-        return await transaction.Connection!.UpdateAsync(invoice, transaction);
+            var result = await transaction.Connection!.UpdateAsync(invoice, transaction);
+            if (result)
+            {
+                _logger.LogInformation("Invoice updated successfully within transaction. InvoiceId: {InvoiceId}, CustomerId: {CustomerId}", invoice.Id, invoice.CustomerId);
+            }
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating invoice within transaction. InvoiceId: {InvoiceId}", invoice.Id);
+            throw;
+        }
     }
 
     public async Task<Invoice?> GetByIdAsync(int id, CancellationToken cancellationToken)
@@ -103,57 +138,87 @@ public sealed class InvoiceRepository : IInvoiceRepository
 
     public async Task<Invoice?> GetByIdWithLockAsync(int id, IDbTransaction transaction, CancellationToken cancellationToken)
     {
-        if (transaction is null)
-            throw new ArgumentNullException(nameof(transaction));
+        try
+        {
+            if (transaction is null)
+                throw new ArgumentNullException(nameof(transaction));
 
-        var connection = transaction.Connection;
-        if (connection is null)
-            throw new InvalidOperationException("Transaction connection is null.");
+            var connection = transaction.Connection;
+            if (connection is null)
+                throw new InvalidOperationException("Transaction connection is null.");
 
-        // Use WITH (UPDLOCK) for pessimistic locking to prevent concurrent modifications
-        var lockingSql = @"SELECT * FROM Invoices WITH (UPDLOCK) WHERE Id = @Id";
+            // Use WITH (UPDLOCK) for pessimistic locking to prevent concurrent modifications
+            var lockingSql = @"SELECT * FROM Invoices WITH (UPDLOCK) WHERE Id = @Id";
 
-        var command = new CommandDefinition(
-            lockingSql,
-            new { Id = id },
-            transaction: transaction,
-            cancellationToken: cancellationToken);
+            var command = new CommandDefinition(
+                lockingSql,
+                new { Id = id },
+                transaction: transaction,
+                cancellationToken: cancellationToken);
 
-        return await connection.QuerySingleOrDefaultAsync<Invoice>(command);
+            var result = await connection.QuerySingleOrDefaultAsync<Invoice>(command);
+            if (result is not null)
+            {
+                _logger.LogInformation("Invoice retrieved with lock. InvoiceId: {InvoiceId}", id);
+            }
+            else
+            {
+                _logger.LogWarning("No invoice found with lock. InvoiceId: {InvoiceId}", id);
+            }
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving invoice with lock. InvoiceId: {InvoiceId}", id);
+            throw;
+        }
     }
 
     public async Task<InvoiceDto?> GetDetailsByIdAsync(int id, CancellationToken cancellationToken)
     {
-        using var connection = _connectionFactory.CreateConnection();
+        try
+        {
+            using var connection = _connectionFactory.CreateConnection();
 
-        var headerCommand = new CommandDefinition(
-            InvoiceSql.GetDetailsHeader,
-            new { Id = id },
-            cancellationToken: cancellationToken);
+            var headerCommand = new CommandDefinition(
+                InvoiceSql.GetDetailsHeader,
+                new { Id = id },
+                cancellationToken: cancellationToken);
 
-        var header = await connection.QuerySingleOrDefaultAsync<InvoiceHeaderRow>(headerCommand);
-        if (header is null)
-            return null;
+            var header = await connection.QuerySingleOrDefaultAsync<InvoiceHeaderRow>(headerCommand);
+            if (header is null)
+            {
+                _logger.LogWarning("Invoice details not found. InvoiceId: {InvoiceId}", id);
+                return null;
+            }
 
-        var itemsCommand = new CommandDefinition(
-            InvoiceSql.GetDetailsItems,
-            new { InvoiceId = id },
-            cancellationToken: cancellationToken);
+            var itemsCommand = new CommandDefinition(
+                InvoiceSql.GetDetailsItems,
+                new { InvoiceId = id },
+                cancellationToken: cancellationToken);
 
-        var items = (await connection.QueryAsync<InvoiceItemDto>(itemsCommand)).ToList();
+            var items = (await connection.QueryAsync<InvoiceItemDto>(itemsCommand)).ToList();
 
-        return new InvoiceDto(
-            header.Id,
-            header.InvoiceNumber,
-            header.CustomerId,
-            header.CustomerName,
-            header.InvoiceDate,
-            header.Status,
-            header.TotalAmount,
-            header.PaidAmount,
-            header.RemainingAmount,
-            header.Notes,
-            items);
+            _logger.LogInformation("Invoice details retrieved successfully. InvoiceId: {InvoiceId}, ItemCount: {ItemCount}", id, items.Count);
+
+            return new InvoiceDto(
+                header.Id,
+                header.InvoiceNumber,
+                header.CustomerId,
+                header.CustomerName,
+                header.InvoiceDate,
+                header.Status,
+                header.TotalAmount,
+                header.PaidAmount,
+                header.RemainingAmount,
+                header.Notes,
+                items);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving invoice details. InvoiceId: {InvoiceId}", id);
+            throw;
+        }
     }
 
     public async Task<bool> HasItemsAsync(int invoiceId, CancellationToken cancellationToken)
@@ -201,37 +266,46 @@ public sealed class InvoiceRepository : IInvoiceRepository
         int pageSize,
         CancellationToken cancellationToken)
     {
-        using var connection = _connectionFactory.CreateConnection();
+        try
+        {
+            using var connection = _connectionFactory.CreateConnection();
 
-        var invoicesCommand = new CommandDefinition(
-            InvoiceSql.GetAllPaged,
-            new
-            {
-                CustomerId = customerId,
-                IncludeIssued = includeIssued,
-                DateFrom = dateFrom,
-                DateTo = dateTo,
-                PageNumber = pageNumber,
-                PageSize = pageSize
-            },
-            cancellationToken: cancellationToken);
+            var invoicesCommand = new CommandDefinition(
+                InvoiceSql.GetAllPaged,
+                new
+                {
+                    CustomerId = customerId,
+                    IncludeIssued = includeIssued,
+                    DateFrom = dateFrom,
+                    DateTo = dateTo,
+                    PageNumber = pageNumber,
+                    PageSize = pageSize
+                },
+                cancellationToken: cancellationToken);
 
-        var invoices = (await connection.QueryAsync<InvoiceSummaryDto>(invoicesCommand)).ToList();
+            var invoices = (await connection.QueryAsync<InvoiceSummaryDto>(invoicesCommand)).ToList();
 
-        var countCommand = new CommandDefinition(
-            InvoiceSql.GetTotalCount,
-            new
-            {
-                CustomerId = customerId,
-                IncludeIssued = includeIssued,
-                DateFrom = dateFrom,
-                DateTo = dateTo
-            },
-            cancellationToken: cancellationToken);
+            var countCommand = new CommandDefinition(
+                InvoiceSql.GetTotalCount,
+                new
+                {
+                    CustomerId = customerId,
+                    IncludeIssued = includeIssued,
+                    DateFrom = dateFrom,
+                    DateTo = dateTo
+                },
+                cancellationToken: cancellationToken);
 
-        var totalCount = await connection.ExecuteScalarAsync<int>(countCommand);
+            var totalCount = await connection.ExecuteScalarAsync<int>(countCommand);
 
-        return (invoices, totalCount);
+            _logger.LogInformation("Invoices retrieved. TotalCount: {TotalCount}, PageNumber: {PageNumber}, PageSize: {PageSize}, CustomerId: {CustomerId}", totalCount, pageNumber, pageSize, customerId);
+            return (invoices, totalCount);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving invoices. CustomerId: {CustomerId}, PageNumber: {PageNumber}, PageSize: {PageSize}", customerId, pageNumber, pageSize);
+            throw;
+        }
     }
 
     private sealed class InvoiceHeaderRow

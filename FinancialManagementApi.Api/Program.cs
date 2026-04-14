@@ -1,8 +1,12 @@
 ﻿using FinancialManagementApi.Api.Extensions;
 using FinancialManagementApi.Application;
 using FinancialManagementApi.Infrastructure;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, loggerConfig) =>
+    loggerConfig.ReadFrom.Configuration(context.Configuration));
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

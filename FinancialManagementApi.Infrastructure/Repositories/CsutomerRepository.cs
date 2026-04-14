@@ -3,44 +3,80 @@ using Dapper.Contrib.Extensions;
 using FinancialManagementApi.Application.Abstractions;
 using FinancialManagementApi.Domain.Entities;
 using FinancialManagementApi.Infrastructure.Sql;
+using Microsoft.Extensions.Logging;
 
 namespace FinancialManagementApi.Infrastructure.Repositories;
 
 public sealed class CustomerRepository : ICustomerRepository
 {
     private readonly ISqlConnectionFactory _connectionFactory;
+    private readonly ILogger<CustomerRepository> _logger;
 
-    public CustomerRepository(ISqlConnectionFactory connectionFactory)
+    public CustomerRepository(ISqlConnectionFactory connectionFactory, ILogger<CustomerRepository> logger)
     {
         _connectionFactory = connectionFactory;
+        _logger = logger;
     }
 
     public async Task<int> CreateAsync(Customer customer, CancellationToken cancellationToken)
     {
-        using var connection = _connectionFactory.CreateConnection();
-
-        var newId = await connection.InsertAsync(customer);
-        return (int)newId;
+        try
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            var newId = await connection.InsertAsync(customer);
+            _logger.LogInformation("Customer created successfully. CustomerId: {CustomerId}, Code: {Code}", newId, customer.Code);
+            return (int)newId;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating customer with code {Code}", customer.Code);
+            throw;
+        }
     }
 
     public async Task<bool> UpdateAsync(Customer customer, CancellationToken cancellationToken)
     {
-        using var connection = _connectionFactory.CreateConnection();
-
-        return await connection.UpdateAsync(customer);
+        try
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            var result = await connection.UpdateAsync(customer);
+            _logger.LogInformation("Customer updated successfully. CustomerId: {CustomerId}, Code: {Code}", customer.Id, customer.Code);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating customer with code {Code}", customer.Code);
+            throw;
+        }
     }
 
     public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken)
     {
-        using var connection = _connectionFactory.CreateConnection();
+        try
+        {
+            using var connection = _connectionFactory.CreateConnection();
 
-        var command = new CommandDefinition(
-            CustomerSql.Delete,
-            new { Id = id },
-            cancellationToken: cancellationToken);
+            var command = new CommandDefinition(
+                CustomerSql.Delete,
+                new { Id = id },
+                cancellationToken: cancellationToken);
 
-        var result = await connection.ExecuteAsync(command);
-        return result > 0;
+            var result = await connection.ExecuteAsync(command);
+            if (result > 0)
+            {
+                _logger.LogInformation("Customer deleted successfully. CustomerId: {CustomerId}", id);
+            }
+            else
+            {
+                _logger.LogWarning("No customer found to delete. CustomerId: {CustomerId}", id);
+            }
+            return result > 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting customer. CustomerId: {CustomerId}", id);
+            throw;
+        }
     }
 
     public async Task<Customer?> GetByIdAsync(int id, CancellationToken cancellationToken)

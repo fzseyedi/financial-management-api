@@ -3,31 +3,53 @@ using Dapper.Contrib.Extensions;
 using FinancialManagementApi.Application.Abstractions;
 using FinancialManagementApi.Domain.Entities;
 using FinancialManagementApi.Infrastructure.Sql;
+using Microsoft.Extensions.Logging;
 
 namespace FinancialManagementApi.Infrastructure.Repositories;
 
 public sealed class ProductRepository : IProductRepository
 {
     private readonly ISqlConnectionFactory _connectionFactory;
+    private readonly ILogger<ProductRepository> _logger;
 
-    public ProductRepository(ISqlConnectionFactory connectionFactory)
+    public ProductRepository(ISqlConnectionFactory connectionFactory, ILogger<ProductRepository> logger)
     {
         _connectionFactory = connectionFactory;
+        _logger = logger;
     }
 
     public async Task<int> CreateAsync(Product product, CancellationToken cancellationToken)
     {
-        using var connection = _connectionFactory.CreateConnection();
+        try
+        {
+            using var connection = _connectionFactory.CreateConnection();
 
-        var newId = await connection.InsertAsync(product);
-        return (int)newId;
+            var newId = await connection.InsertAsync(product);
+            _logger.LogInformation("Product created successfully. ProductId: {ProductId}, Code: {Code}, Name: {Name}", newId, product.Code, product.Name);
+            return (int)newId;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating product with code {Code}", product.Code);
+            throw;
+        }
     }
 
     public async Task<bool> UpdateAsync(Product product, CancellationToken cancellationToken)
     {
-        using var connection = _connectionFactory.CreateConnection();
+        try
+        {
+            using var connection = _connectionFactory.CreateConnection();
 
-        return await connection.UpdateAsync(product);
+            var result = await connection.UpdateAsync(product);
+            _logger.LogInformation("Product updated successfully. ProductId: {ProductId}, Code: {Code}, Name: {Name}", product.Id, product.Code, product.Name);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating product with code {Code}", product.Code);
+            throw;
+        }
     }
 
     public async Task<Product?> GetByIdAsync(int id, CancellationToken cancellationToken)
@@ -87,30 +109,39 @@ public sealed class ProductRepository : IProductRepository
         int pageSize,
         CancellationToken cancellationToken)
     {
-        using var connection = _connectionFactory.CreateConnection();
+        try
+        {
+            using var connection = _connectionFactory.CreateConnection();
 
-        var sql = includeInactive
-            ? ProductSql.GetAllIncludingInactivePaged
-            : ProductSql.GetAllActivePaged;
+            var sql = includeInactive
+                ? ProductSql.GetAllIncludingInactivePaged
+                : ProductSql.GetAllActivePaged;
 
-        var countSql = includeInactive
-            ? ProductSql.GetTotalCountIncludingInactive
-            : ProductSql.GetTotalCountActive;
+            var countSql = includeInactive
+                ? ProductSql.GetTotalCountIncludingInactive
+                : ProductSql.GetTotalCountActive;
 
-        var parameters = new { PageNumber = pageNumber, PageSize = pageSize };
+            var parameters = new { PageNumber = pageNumber, PageSize = pageSize };
 
-        var command = new CommandDefinition(
-            sql,
-            parameters,
-            cancellationToken: cancellationToken);
+            var command = new CommandDefinition(
+                sql,
+                parameters,
+                cancellationToken: cancellationToken);
 
-        var countCommand = new CommandDefinition(
-            countSql,
-            cancellationToken: cancellationToken);
+            var countCommand = new CommandDefinition(
+                countSql,
+                cancellationToken: cancellationToken);
 
-        var products = await connection.QueryAsync<Product>(command);
-        var totalCount = await connection.ExecuteScalarAsync<int>(countCommand);
+            var products = await connection.QueryAsync<Product>(command);
+            var totalCount = await connection.ExecuteScalarAsync<int>(countCommand);
 
-        return (products, totalCount);
+            _logger.LogInformation("Products retrieved. TotalCount: {TotalCount}, PageNumber: {PageNumber}, PageSize: {PageSize}, IncludeInactive: {IncludeInactive}", totalCount, pageNumber, pageSize, includeInactive);
+            return (products, totalCount);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving products. PageNumber: {PageNumber}, PageSize: {PageSize}", pageNumber, pageSize);
+            throw;
+        }
     }
 }

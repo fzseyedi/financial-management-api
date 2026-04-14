@@ -70,9 +70,152 @@ The solution follows a **Clean Architecture** structure with clear separation of
 - Dapper
 - Dapper.Contrib
 - FluentValidation
+- Serilog (structured logging with file persistence)
 - xUnit
 - FluentAssertions
 - Moq
+
+---
+
+## Logging
+
+The application uses **Serilog** for structured logging with persistent file storage to track application events, errors, and debugging information.
+
+### Configuration
+
+Serilog is configured in `appsettings.json` with the following settings:
+
+**Production (appsettings.json)**:
+- **Log Level**: Information (default) with Warning level for Microsoft and System namespaces
+- **Output**: File-based with daily rolling intervals
+- **Location**: `logs/financial-api-.txt`
+- **Retention**: 30 days of log files
+- **File Size Limit**: 100 MB per file
+- **Enrichers**: Context, Machine Name, Environment User Name, Thread ID
+
+**Development (appsettings.Development.json)**:
+- **Log Level**: Debug (for detailed debugging)
+- **Output**: Both console and file
+- **Console Format**: Compact timestamps with color levels
+- **File Format**: Full timestamps with milliseconds
+
+### Log File Format
+
+Logs include the following structure:
+```
+2024-01-15 10:30:45.123 +00:00 [INF] [FinancialManagementApi.Infrastructure.Repositories.CustomerRepository] Customer created successfully. CustomerId: 5, Code: CUST001
+2024-01-15 10:30:46.456 +00:00 [ERR] [FinancialManagementApi.Api.Middleware.ExceptionHandlingMiddleware] An unexpected error occurred for request /api/invoices POST
+   System.Exception: Database connection failed
+   at FinancialManagementApi.Infrastructure.Persistence.SqlConnectionFactory...
+```
+
+### Logging Coverage
+
+Logging is implemented across:
+
+#### **Exception Handling Middleware**
+- Validation errors (Warning)
+- Resource not found (Information)
+- Business rule violations (Warning)
+- Unexpected errors (Error) with full exception details
+
+#### **Repositories** (all CRUD operations)
+
+**CustomerRepository**:
+- Create, update, delete operations with customer codes
+- Error tracking with exception details
+
+**ProductRepository**:
+- Create and update operations with product codes and names
+- Pagination retrieval with result counts
+
+**InvoiceRepository**:
+- Multi-item invoice creation with transaction tracking
+- Update operations (standard and transactional)
+- Detail retrieval with item counts
+- Pessimistic locking operations
+- Paginated queries with filtering
+
+**PaymentRepository**:
+- Payment creation (standalone and transactional) with amounts
+- Customer balance retrieval
+- Unpaid invoices reporting
+- Payment existence verification
+
+### Accessing Logs
+
+#### **Production**
+Logs are stored in the `logs/` directory:
+```
+logs/
+├── financial-api-20240115.txt
+├── financial-api-20240114.txt
+└── financial-api-20240113.txt
+```
+
+#### **Development**
+- **Console**: Immediate real-time feedback in terminal
+- **File**: Same location as production for offline analysis
+
+### Configuration Examples
+
+#### Changing Log Level
+Edit `appsettings.json`:
+```json
+{
+  "Serilog": {
+    "MinimumLevel": {
+      "Default": "Debug"  // Changed from Information
+    }
+  }
+}
+```
+
+#### Changing Log File Location
+Edit `appsettings.json`:
+```json
+{
+  "Serilog": {
+    "WriteTo": [
+      {
+        "Name": "File",
+        "Args": {
+          "path": "C:/MyLogs/financial-api-.txt"  // Custom path
+        }
+      }
+    ]
+  }
+}
+```
+
+#### Adding Custom Logging
+Inject `ILogger<T>` in any service:
+```csharp
+public class MyService
+{
+    private readonly ILogger<MyService> _logger;
+
+    public MyService(ILogger<MyService> logger)
+    {
+        _logger = logger;
+    }
+
+    public void DoWork()
+    {
+        _logger.LogInformation("Work started");
+        try 
+        {
+            // work here
+            _logger.LogInformation("Work completed successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Work failed");
+            throw;
+        }
+    }
+}
+```
 
 ---
 
