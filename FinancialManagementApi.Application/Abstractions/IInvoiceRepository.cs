@@ -11,6 +11,11 @@ public interface IInvoiceRepository
         IReadOnlyCollection<InvoiceItem> items,
         CancellationToken cancellationToken);
 
+    Task UpdateWithItemsAsync(
+        Invoice invoice,
+        IReadOnlyCollection<InvoiceItem> items,
+        CancellationToken cancellationToken);
+
     Task<bool> UpdateAsync(Invoice invoice, CancellationToken cancellationToken);
 
     /// <summary>

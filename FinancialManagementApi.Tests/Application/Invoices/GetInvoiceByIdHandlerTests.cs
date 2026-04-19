@@ -24,6 +24,9 @@ public sealed class GetInvoiceByIdHandlerTests
             0m,
             300m,
             "First invoice",
+            new DateTime(2026, 4, 9),
+            null,
+            Convert.ToBase64String([1, 2, 3, 4, 5, 6, 7, 8]),
             new List<InvoiceItemDto>
             {
                 new(1, "Office Chair", 2m, 150m, 300m)

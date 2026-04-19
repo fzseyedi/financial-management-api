@@ -1,6 +1,7 @@
 ﻿using FinancialManagementApi.Api.Contracts;
 using FinancialManagementApi.Application.Invoices.Commands;
 using FinancialManagementApi.Application.Invoices.Commands.CreateInvoice;
+using FinancialManagementApi.Application.Invoices.Commands.UpdateInvoice;
 using FinancialManagementApi.Application.Invoices.Queries;
 using Microsoft.AspNetCore.Mvc;
 
@@ -72,5 +73,33 @@ public sealed class InvoicesController : ControllerBase
             return NotFound();
 
         return Ok(result);
+    }
+
+    [HttpPut("{invoiceId:int}")]
+    public async Task<IActionResult> Update(
+        int invoiceId,
+        [FromBody] UpdateInvoiceRequest request,
+        [FromServices] UpdateInvoiceHandler handler,
+        CancellationToken cancellationToken)
+    {
+        var versionBytes = string.IsNullOrEmpty(request.Version) ? [] : Convert.FromBase64String(request.Version);
+
+        var command = new UpdateInvoiceCommand(
+            invoiceId,
+            request.CustomerId,
+            request.InvoiceDate,
+            request.Notes,
+            versionBytes,
+            request.ModifiedBy,
+            request.Items.Select(x => new UpdateInvoiceCommandItem(
+                x.Id,
+                x.ProductId,
+                x.Quantity,
+                x.UnitPrice))
+            .ToList());
+
+        await handler.HandleAsync(command, cancellationToken);
+
+        return NoContent();
     }
 }

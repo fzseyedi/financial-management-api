@@ -48,3 +48,92 @@ GET {{host}}/api/invoices/8
 
 ### Issue invoice
 POST {{host}}/api/invoices/8/issue
+
+### Update invoice with optimistic concurrency control
+### Note: Replace the id (8), version (base64 string), and other fields as needed
+### To get the current version, first retrieve the invoice using GET request
+PUT {{host}}/api/invoices/8
+Content-Type: application/json
+
+{
+  "customerId": 1,
+  "invoiceDate": "2026-04-10T00:00:00",
+  "notes": "Updated invoice - modified items and date",
+  "version": "AAAAAAAAB9M=",
+  "modifiedBy": "user@company.com",
+  "items": [
+    {
+      "id": 1,
+      "productId": 1,
+      "quantity": 3,
+      "unitPrice": 160.00
+    },
+    {
+      "id": 2,
+      "productId": 2,
+      "quantity": 2,
+      "unitPrice": 50.00
+    }
+  ]
+}
+
+### Update invoice with single item
+PUT {{host}}/api/invoices/8
+Content-Type: application/json
+
+{
+  "customerId": 1,
+  "invoiceDate": "2026-04-11T00:00:00",
+  "notes": "Updated with single item",
+  "version": "AAAAAAAA8ng=",
+  "modifiedBy": "admin@company.com",
+  "items": [
+    {
+      "id": 1,
+      "productId": 1,
+      "quantity": 5,
+      "unitPrice": 175.00
+    }
+  ]
+}
+
+### Update invoice with different customer
+PUT {{host}}/api/invoices/8
+Content-Type: application/json
+
+{
+  "customerId": 2,
+  "invoiceDate": "2026-04-12T00:00:00",
+  "notes": "Reassigned to different customer",
+  "version": "AAAAAAAA8ng=",
+  "modifiedBy": "user@company.com",
+  "items": [
+    {
+      "id": 1,
+      "productId": 1,
+      "quantity": 2,
+      "unitPrice": 150.00
+    }
+  ]
+}
+
+### Update invoice - expected to fail with concurrency conflict (version mismatch)
+### This demonstrates optimistic concurrency control
+PUT {{host}}/api/invoices/8
+Content-Type: application/json
+
+{
+  "customerId": 1,
+  "invoiceDate": "2026-04-13T00:00:00",
+  "notes": "This should fail due to version mismatch",
+  "version": "InvalidVersionString==",
+  "modifiedBy": "user@company.com",
+  "items": [
+    {
+      "id": 1,
+      "productId": 1,
+      "quantity": 2,
+      "unitPrice": 150.00
+    }
+  ]
+}

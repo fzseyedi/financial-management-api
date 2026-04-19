@@ -31,7 +31,10 @@ public static class InvoiceSql
             TotalAmount,
             PaidAmount,
             Notes,
-            CreatedAt
+            CreatedAt,
+            ModifiedAt,
+            ModifiedBy,
+            [Version]
         FROM Invoices
         WHERE Id = @Id;
         """;
@@ -63,7 +66,10 @@ public static class InvoiceSql
             i.TotalAmount,
             i.PaidAmount,
             (i.TotalAmount - i.PaidAmount) AS RemainingAmount,
-            i.Notes
+            i.Notes,
+            i.ModifiedAt,
+            i.ModifiedBy,
+            i.[Version]
         FROM Invoices i
         INNER JOIN Customers c ON c.Id = i.CustomerId
         WHERE i.Id = @Id;

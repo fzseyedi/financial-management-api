@@ -11,4 +11,7 @@ public sealed record InvoiceDto(
     decimal PaidAmount,
     decimal RemainingAmount,
     string? Notes,
+    DateTime ModifiedAt,
+    string? ModifiedBy,
+    string Version,
     IReadOnlyCollection<InvoiceItemDto> Items);

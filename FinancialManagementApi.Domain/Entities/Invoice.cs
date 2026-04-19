@@ -64,4 +64,28 @@ public class Invoice : BaseEntity
         else
             Status = InvoiceStatus.Paid;
     }
+
+    /// <summary>
+    /// Updates the invoice with new values. Only updates draft invoices or specific allowed fields.
+    /// </summary>
+    public void Update(int customerId, DateTime invoiceDate, string? notes, string? modifiedBy)
+    {
+        ArgumentNullException.ThrowIfNull(customerId);
+
+        CustomerId = customerId;
+        InvoiceDate = invoiceDate;
+        Notes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim();
+        ModifiedBy = modifiedBy;
+        ModifiedAt = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Updates the total amount and modification tracking.
+    /// </summary>
+    public void UpdateTotalAmount(decimal totalAmount, string? modifiedBy)
+    {
+        TotalAmount = totalAmount;
+        ModifiedBy = modifiedBy;
+        ModifiedAt = DateTime.UtcNow;
+    }
 }

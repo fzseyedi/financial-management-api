@@ -85,16 +85,47 @@ public sealed class InvoiceRepository : IInvoiceRepository
         try
         {
             using var connection = _connectionFactory.CreateConnection();
-            var result = await connection.UpdateAsync(invoice);
-            if (result)
+
+            var updateSql = @"
+                UPDATE Invoices
+                SET CustomerId = @CustomerId,
+                    InvoiceDate = @InvoiceDate,
+                    Status = @Status,
+                    TotalAmount = @TotalAmount,
+                    PaidAmount = @PaidAmount,
+                    Notes = @Notes,
+                    ModifiedAt = @ModifiedAt,
+                    ModifiedBy = @ModifiedBy
+                WHERE Id = @Id AND [Version] = @Version";
+
+            var command = new CommandDefinition(
+                updateSql,
+                new
+                {
+                    invoice.CustomerId,
+                    invoice.InvoiceDate,
+                    invoice.Status,
+                    invoice.TotalAmount,
+                    invoice.PaidAmount,
+                    invoice.Notes,
+                    invoice.ModifiedAt,
+                    invoice.ModifiedBy,
+                    invoice.Id,
+                    invoice.Version
+                },
+                cancellationToken: cancellationToken);
+
+            var result = await connection.ExecuteAsync(command);
+            if (result > 0)
             {
                 _logger.LogInformation("Invoice updated successfully. InvoiceId: {InvoiceId}, CustomerId: {CustomerId}", invoice.Id, invoice.CustomerId);
+                return true;
             }
             else
             {
                 _logger.LogWarning("No invoice found to update. InvoiceId: {InvoiceId}", invoice.Id);
+                return false;
             }
-            return result;
         }
         catch (Exception ex)
         {
@@ -110,12 +141,43 @@ public sealed class InvoiceRepository : IInvoiceRepository
             if (transaction is null)
                 throw new ArgumentNullException(nameof(transaction));
 
-            var result = await transaction.Connection!.UpdateAsync(invoice, transaction);
-            if (result)
+            var updateSql = @"
+                UPDATE Invoices
+                SET CustomerId = @CustomerId,
+                    InvoiceDate = @InvoiceDate,
+                    Status = @Status,
+                    TotalAmount = @TotalAmount,
+                    PaidAmount = @PaidAmount,
+                    Notes = @Notes,
+                    ModifiedAt = @ModifiedAt,
+                    ModifiedBy = @ModifiedBy
+                WHERE Id = @Id AND [Version] = @Version";
+
+            var command = new CommandDefinition(
+                updateSql,
+                new
+                {
+                    invoice.CustomerId,
+                    invoice.InvoiceDate,
+                    invoice.Status,
+                    invoice.TotalAmount,
+                    invoice.PaidAmount,
+                    invoice.Notes,
+                    invoice.ModifiedAt,
+                    invoice.ModifiedBy,
+                    invoice.Id,
+                    invoice.Version
+                },
+                transaction: transaction,
+                cancellationToken: cancellationToken);
+
+            var result = await transaction.Connection!.ExecuteAsync(command);
+            if (result > 0)
             {
                 _logger.LogInformation("Invoice updated successfully within transaction. InvoiceId: {InvoiceId}, CustomerId: {CustomerId}", invoice.Id, invoice.CustomerId);
+                return true;
             }
-            return result;
+            return false;
         }
         catch (Exception ex)
         {
@@ -212,6 +274,9 @@ public sealed class InvoiceRepository : IInvoiceRepository
                 header.PaidAmount,
                 header.RemainingAmount,
                 header.Notes,
+                header.ModifiedAt,
+                header.ModifiedBy,
+                Convert.ToBase64String(header.Version),
                 items);
         }
         catch (Exception ex)
@@ -308,6 +373,100 @@ public sealed class InvoiceRepository : IInvoiceRepository
         }
     }
 
+    public async Task UpdateWithItemsAsync(
+        Invoice invoice,
+        IReadOnlyCollection<InvoiceItem> items,
+        CancellationToken cancellationToken)
+    {
+        using var connection = _connectionFactory.CreateConnection();
+
+        if (connection is not IDbConnection dbConnection)
+            throw new InvalidOperationException("Invalid database connection.");
+
+        if (dbConnection.State != ConnectionState.Open)
+            dbConnection.Open();
+
+        using var transaction = dbConnection.BeginTransaction();
+
+        try
+        {
+            // Update invoice with optimistic concurrency check (excluding timestamp Version column)
+            var updateSql = @"
+                UPDATE Invoices
+                SET CustomerId = @CustomerId,
+                    InvoiceDate = @InvoiceDate,
+                    Status = @Status,
+                    TotalAmount = @TotalAmount,
+                    PaidAmount = @PaidAmount,
+                    Notes = @Notes,
+                    ModifiedAt = @ModifiedAt,
+                    ModifiedBy = @ModifiedBy
+                WHERE Id = @Id AND [Version] = @Version";
+
+            var updateCommand = new CommandDefinition(
+                updateSql,
+                new
+                {
+                    invoice.CustomerId,
+                    invoice.InvoiceDate,
+                    invoice.Status,
+                    invoice.TotalAmount,
+                    invoice.PaidAmount,
+                    invoice.Notes,
+                    invoice.ModifiedAt,
+                    invoice.ModifiedBy,
+                    invoice.Id,
+                    invoice.Version
+                },
+                transaction: transaction,
+                cancellationToken: cancellationToken);
+
+            var result = await dbConnection.ExecuteAsync(updateCommand);
+            if (result == 0)
+                throw new InvalidOperationException($"Failed to update invoice with id {invoice.Id}. The invoice may have been deleted or the version may have changed.");
+
+            // Delete existing items for this invoice
+            var deleteItemsSql = "DELETE FROM InvoiceItems WHERE InvoiceId = @InvoiceId";
+            var deleteCommand = new CommandDefinition(
+                deleteItemsSql,
+                new { InvoiceId = invoice.Id },
+                transaction: transaction,
+                cancellationToken: cancellationToken);
+
+            await dbConnection.ExecuteAsync(deleteCommand);
+
+            // Insert new items
+            foreach (var item in items)
+            {
+                item.AssignInvoice(invoice.Id);
+
+                var command = new CommandDefinition(
+                    InvoiceSql.InsertInvoiceItem,
+                    new
+                    {
+                        item.InvoiceId,
+                        item.ProductId,
+                        item.Quantity,
+                        item.UnitPrice,
+                        item.LineTotal
+                    },
+                    transaction: transaction,
+                    cancellationToken: cancellationToken);
+
+                await dbConnection.ExecuteAsync(command);
+            }
+
+            transaction.Commit();
+            _logger.LogInformation("Invoice updated successfully with {ItemCount} items. InvoiceId: {InvoiceId}, CustomerId: {CustomerId}", items.Count, invoice.Id, invoice.CustomerId);
+        }
+        catch (Exception ex)
+        {
+            transaction.Rollback();
+            _logger.LogError(ex, "Error updating invoice with items. InvoiceId: {InvoiceId}, CustomerId: {CustomerId}", invoice.Id, invoice.CustomerId);
+            throw;
+        }
+    }
+
     private sealed class InvoiceHeaderRow
     {
         public int Id { get; init; }
@@ -320,5 +479,8 @@ public sealed class InvoiceRepository : IInvoiceRepository
         public decimal PaidAmount { get; init; }
         public decimal RemainingAmount { get; init; }
         public string? Notes { get; init; }
+        public DateTime ModifiedAt { get; init; }
+        public string? ModifiedBy { get; init; }
+        public byte[] Version { get; init; } = [];
     }
 }
