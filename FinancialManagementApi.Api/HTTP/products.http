@@ -46,3 +46,12 @@ PUT {{host}}/api/products/1/deactivate
 
 ### Activate product
 PUT {{host}}/api/products/1/activate
+
+### Delete product
+DELETE {{host}}/api/products/1
+
+### Delete product that doesn't exist
+DELETE {{host}}/api/products/999
+
+### Delete product with invoice items (will fail)
+DELETE {{host}}/api/products/2

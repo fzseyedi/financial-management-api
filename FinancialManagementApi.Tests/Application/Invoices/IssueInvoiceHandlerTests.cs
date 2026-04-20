@@ -1,6 +1,7 @@
 ﻿using FinancialManagementApi.Application.Abstractions;
 using FinancialManagementApi.Application.Common.Exceptions;
 using FinancialManagementApi.Application.Invoices.Commands;
+using FinancialManagementApi.Application.Invoices.Commands.IssueInvoice;
 using FinancialManagementApi.Domain.Entities;
 using FinancialManagementApi.Domain.Enums;
 using FinancialManagementApi.Domain.Exceptions;

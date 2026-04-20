@@ -10,4 +10,8 @@
     <None Include="Entities\Product.cs" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Dapper.Contrib" Version="2.0.78" />
+  </ItemGroup>
+
 </Project>

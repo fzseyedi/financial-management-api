@@ -6,6 +6,7 @@ public interface IProductRepository
 {
     Task<int> CreateAsync(Product product, CancellationToken cancellationToken);
     Task<bool> UpdateAsync(Product product, CancellationToken cancellationToken);
+    Task<bool> DeleteAsync(int id, CancellationToken cancellationToken);
     Task<Product?> GetByIdAsync(int id, CancellationToken cancellationToken);
     Task<bool> ExistsByCodeAsync(string code, CancellationToken cancellationToken);
     Task<bool> ExistsByCodeAsync(string code, int excludeId, CancellationToken cancellationToken);

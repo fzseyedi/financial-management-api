@@ -52,6 +52,35 @@ public sealed class ProductRepository : IProductRepository
         }
     }
 
+    public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var connection = _connectionFactory.CreateConnection();
+
+            var command = new CommandDefinition(
+                ProductSql.Delete,
+                new { Id = id },
+                cancellationToken: cancellationToken);
+
+            var result = await connection.ExecuteAsync(command);
+            if (result > 0)
+            {
+                _logger.LogInformation("Product deleted successfully. ProductId: {ProductId}", id);
+            }
+            else
+            {
+                _logger.LogWarning("No product found to delete. ProductId: {ProductId}", id);
+            }
+            return result > 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting product. ProductId: {ProductId}", id);
+            throw;
+        }
+    }
+
     public async Task<Product?> GetByIdAsync(int id, CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();

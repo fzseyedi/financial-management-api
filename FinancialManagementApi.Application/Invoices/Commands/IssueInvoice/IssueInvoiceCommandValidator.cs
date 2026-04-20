@@ -1,6 +1,6 @@
 ﻿using FluentValidation;
 
-namespace FinancialManagementApi.Application.Invoices.Commands;
+namespace FinancialManagementApi.Application.Invoices.Commands.IssueInvoice;
 
 public sealed class IssueInvoiceCommandValidator : AbstractValidator<IssueInvoiceCommand>
 {

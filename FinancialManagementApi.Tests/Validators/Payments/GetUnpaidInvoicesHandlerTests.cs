@@ -1,12 +1,8 @@
 ﻿using FinancialManagementApi.Application.Abstractions;
 using FinancialManagementApi.Application.DTOs;
 using FinancialManagementApi.Application.Reports.Queries;
-using FinancialManagementApi.Application.Reports.Queries.GetUnpaidInvoices;
 using FluentAssertions;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace FinancialManagementApi.Tests.Validators.Payments;
 

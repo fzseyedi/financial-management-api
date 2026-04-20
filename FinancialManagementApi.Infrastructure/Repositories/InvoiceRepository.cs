@@ -236,6 +236,57 @@ public sealed class InvoiceRepository : IInvoiceRepository
         }
     }
 
+    public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken)
+    {
+        using var connection = _connectionFactory.CreateConnection();
+
+        if (connection is not IDbConnection dbConnection)
+            throw new InvalidOperationException("Invalid database connection.");
+
+        if (dbConnection.State != ConnectionState.Open)
+            dbConnection.Open();
+
+        using var transaction = dbConnection.BeginTransaction();
+
+        try
+        {
+            var deleteItemsCommand = new CommandDefinition(
+                InvoiceSql.DeleteInvoiceItems,
+                new { Id = id },
+                transaction: transaction,
+                cancellationToken: cancellationToken);
+
+            await dbConnection.ExecuteAsync(deleteItemsCommand);
+
+            var deleteInvoiceCommand = new CommandDefinition(
+                InvoiceSql.DeleteInvoice,
+                new { Id = id },
+                transaction: transaction,
+                cancellationToken: cancellationToken);
+
+            var result = await dbConnection.ExecuteAsync(deleteInvoiceCommand);
+
+            transaction.Commit();
+
+            if (result > 0)
+            {
+                _logger.LogInformation("Invoice deleted successfully. InvoiceId: {InvoiceId}", id);
+            }
+            else
+            {
+                _logger.LogWarning("No invoice found to delete. InvoiceId: {InvoiceId}", id);
+            }
+
+            return result > 0;
+        }
+        catch (Exception ex)
+        {
+            transaction.Rollback();
+            _logger.LogError(ex, "Error deleting invoice. InvoiceId: {InvoiceId}", id);
+            throw;
+        }
+    }
+
     public async Task<InvoiceDto?> GetDetailsByIdAsync(int id, CancellationToken cancellationToken)
     {
         try
@@ -317,6 +368,18 @@ public sealed class InvoiceRepository : IInvoiceRepository
         var command = new CommandDefinition(
             InvoiceSql.HasCustomerInvoices,
             new { CustomerId = customerId },
+            cancellationToken: cancellationToken);
+
+        return await connection.ExecuteScalarAsync<bool>(command);
+    }
+
+    public async Task<bool> HasProductInvoiceItemsAsync(int productId, CancellationToken cancellationToken)
+    {
+        using var connection = _connectionFactory.CreateConnection();
+
+        var command = new CommandDefinition(
+            InvoiceSql.HasProductInvoiceItems,
+            new { ProductId = productId },
             cancellationToken: cancellationToken);
 
         return await connection.ExecuteScalarAsync<bool>(command);

@@ -1,6 +1,4 @@
-﻿using FinancialManagementApi.Application.Invoices.Commands.CreateInvoice;
-
-namespace FinancialManagementApi.Application.Invoices.Commands;
+﻿namespace FinancialManagementApi.Application.Invoices.Commands.CreateInvoice;
 
 public sealed record CreateInvoiceCommand(
     int CustomerId,

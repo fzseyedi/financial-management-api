@@ -4,8 +4,9 @@ using FinancialManagementApi.Application.Customers.Commands.DeactivateCustomer;
 using FinancialManagementApi.Application.Customers.Commands.DeleteCustomer;
 using FinancialManagementApi.Application.Customers.Commands.UpdateCustomer;
 using FinancialManagementApi.Application.Customers.Queries;
-using FinancialManagementApi.Application.Invoices.Commands;
 using FinancialManagementApi.Application.Invoices.Commands.CreateInvoice;
+using FinancialManagementApi.Application.Invoices.Commands.DeleteInvoice;
+using FinancialManagementApi.Application.Invoices.Commands.IssueInvoice;
 using FinancialManagementApi.Application.Invoices.Commands.UpdateInvoice;
 using FinancialManagementApi.Application.Invoices.Queries;
 using FinancialManagementApi.Application.Payments.Commands.RecordPayment;
@@ -15,7 +16,6 @@ using FinancialManagementApi.Application.Products.Commands.DeactivateProduct;
 using FinancialManagementApi.Application.Products.Commands.UpdateProduct;
 using FinancialManagementApi.Application.Products.Queries;
 using FinancialManagementApi.Application.Reports.Queries;
-using FinancialManagementApi.Application.Reports.Queries.GetUnpaidInvoices;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
@@ -43,6 +43,7 @@ public static class DependencyInjection
 
         services.AddScoped<CreateInvoiceHandler>();
         services.AddScoped<UpdateInvoiceHandler>();
+        services.AddScoped<DeleteInvoiceHandler>();
         services.AddScoped<IssueInvoiceHandler>();
         services.AddScoped<GetInvoiceByIdHandler>();
         services.AddScoped<GetAllInvoicesHandler>();

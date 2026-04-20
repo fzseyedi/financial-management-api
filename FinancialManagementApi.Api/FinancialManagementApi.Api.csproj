@@ -17,4 +17,8 @@
     <ProjectReference Include="..\FinancialManagementApi.Infrastructure\FinancialManagementApi.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="logs\" />
+  </ItemGroup>
+
 </Project>

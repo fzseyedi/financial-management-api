@@ -99,4 +99,9 @@ public static class ProductSql
         SELECT COUNT(*)
         FROM Products;
         """;
+
+    public const string Delete = """
+        DELETE FROM Products
+        WHERE Id = @Id;
+        """;
 }

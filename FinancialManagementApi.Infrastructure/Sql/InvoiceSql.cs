@@ -49,6 +49,14 @@ public static class InvoiceSql
         THEN 1 ELSE 0 END AS BIT);
         """;
 
+    public const string DeleteInvoiceItems = """
+        DELETE FROM InvoiceItems WHERE InvoiceId = @Id;
+        """;
+
+    public const string DeleteInvoice = """
+        DELETE FROM Invoices WHERE Id = @Id;
+        """;
+
     public const string GetInvoiceTotal = """
         SELECT ISNULL(SUM(LineTotal), 0)
         FROM InvoiceItems
@@ -94,6 +102,16 @@ public static class InvoiceSql
             SELECT 1
             FROM Invoices
             WHERE CustomerId = @CustomerId
+        )
+        THEN 1 ELSE 0 END AS BIT);
+        """;
+
+    public const string HasProductInvoiceItems = """
+        SELECT CAST(CASE WHEN EXISTS
+        (
+            SELECT 1
+            FROM InvoiceItems
+            WHERE ProductId = @ProductId
         )
         THEN 1 ELSE 0 END AS BIT);
         """;

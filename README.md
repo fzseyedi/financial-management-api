@@ -32,6 +32,7 @@ This project is designed as a portfolio project for a senior .NET developer prof
 - Persist invoice header and rows in one SQL transaction
 - Get invoice by id with item details
 - Issue invoice
+- **Delete invoice** (only draft invoices can be deleted; items are removed in a transaction)
 
 ### Payments & Reports
 - Record payment against an invoice
@@ -132,6 +133,7 @@ Logging is implemented across:
 **InvoiceRepository**:
 - Multi-item invoice creation with transaction tracking
 - Update operations (standard and transactional)
+- Delete operations with transactional item cleanup
 - Detail retrieval with item counts
 - Pessimistic locking operations
 - Paginated queries with filtering

@@ -2,7 +2,7 @@
 using FinancialManagementApi.Application.Common.Exceptions;
 using FluentValidation;
 
-namespace FinancialManagementApi.Application.Invoices.Commands;
+namespace FinancialManagementApi.Application.Invoices.Commands.IssueInvoice;
 
 public sealed class IssueInvoiceHandler
 {

@@ -1,4 +1,4 @@
-﻿using FinancialManagementApi.Application.Invoices.Commands;
+﻿using FinancialManagementApi.Application.Invoices.Commands.IssueInvoice;
 using FluentAssertions;
 
 namespace FinancialManagementApi.Tests.Validators.Invoices;

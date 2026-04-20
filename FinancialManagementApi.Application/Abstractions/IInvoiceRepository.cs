@@ -46,6 +46,16 @@ public interface IInvoiceRepository
     Task<bool> HasCustomerInvoicesAsync(int customerId, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Checks if a product has any invoice items.
+    /// </summary>
+    Task<bool> HasProductInvoiceItemsAsync(int productId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Deletes an invoice and its items by ID.
+    /// </summary>
+    Task<bool> DeleteAsync(int id, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Retrieves a paginated list of invoices with optional filtering by customer, issued status, and date range.
     /// </summary>
     Task<(IEnumerable<InvoiceSummaryDto> Invoices, int TotalCount)> GetAllPagedAsync(

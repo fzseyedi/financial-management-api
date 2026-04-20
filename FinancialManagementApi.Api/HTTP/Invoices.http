@@ -137,3 +137,12 @@ Content-Type: application/json
     }
   ]
 }
+
+### Delete a draft invoice
+DELETE {{host}}/api/invoices/8
+
+### Delete invoice - expected to fail (invoice not found)
+DELETE {{host}}/api/invoices/99999
+
+### Delete invoice - expected to fail (non-draft invoice cannot be deleted)
+DELETE {{host}}/api/invoices/1

@@ -1,5 +1,4 @@
 ﻿using FinancialManagementApi.Application.Reports.Queries;
-using FinancialManagementApi.Application.Reports.Queries.GetUnpaidInvoices;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FinancialManagementApi.Api.Controllers;

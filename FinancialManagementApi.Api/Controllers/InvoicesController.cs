@@ -1,6 +1,7 @@
 ﻿using FinancialManagementApi.Api.Contracts;
-using FinancialManagementApi.Application.Invoices.Commands;
 using FinancialManagementApi.Application.Invoices.Commands.CreateInvoice;
+using FinancialManagementApi.Application.Invoices.Commands.DeleteInvoice;
+using FinancialManagementApi.Application.Invoices.Commands.IssueInvoice;
 using FinancialManagementApi.Application.Invoices.Commands.UpdateInvoice;
 using FinancialManagementApi.Application.Invoices.Queries;
 using Microsoft.AspNetCore.Mvc;
@@ -100,6 +101,16 @@ public sealed class InvoicesController : ControllerBase
 
         await handler.HandleAsync(command, cancellationToken);
 
+        return NoContent();
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(
+        int id,
+        [FromServices] DeleteInvoiceHandler handler,
+        CancellationToken cancellationToken)
+    {
+        await handler.HandleAsync(new DeleteInvoiceCommand(id), cancellationToken);
         return NoContent();
     }
 }

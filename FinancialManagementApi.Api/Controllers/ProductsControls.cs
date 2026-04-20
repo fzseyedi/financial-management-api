@@ -2,6 +2,7 @@
 using FinancialManagementApi.Application.Products.Commands.ActivateProduct;
 using FinancialManagementApi.Application.Products.Commands.CreateProdcut;
 using FinancialManagementApi.Application.Products.Commands.DeactivateProduct;
+using FinancialManagementApi.Application.Products.Commands.DeleteProduct;
 using FinancialManagementApi.Application.Products.Commands.UpdateProduct;
 using FinancialManagementApi.Application.Products.Queries;
 using Microsoft.AspNetCore.Mvc;
@@ -66,6 +67,16 @@ public sealed class ProductsController : ControllerBase
         CancellationToken cancellationToken)
     {
         await handler.HandleAsync(new ActivateProductCommand(id), cancellationToken);
+        return NoContent();
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(
+        int id,
+        [FromServices] DeleteProductHandler handler,
+        CancellationToken cancellationToken)
+    {
+        await handler.HandleAsync(new DeleteProductCommand(id), cancellationToken);
         return NoContent();
     }
 

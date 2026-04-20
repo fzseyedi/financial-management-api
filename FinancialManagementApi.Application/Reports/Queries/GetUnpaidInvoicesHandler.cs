@@ -1,7 +1,7 @@
 ﻿using FinancialManagementApi.Application.Abstractions;
 using FinancialManagementApi.Application.DTOs;
 
-namespace FinancialManagementApi.Application.Reports.Queries.GetUnpaidInvoices;
+namespace FinancialManagementApi.Application.Reports.Queries;
 
 public sealed class GetUnpaidInvoicesHandler
 {
